@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Login/Signup Page</title>
+</head>
+<body>
+    <div class="container">
+        <div class="forms">
+            <div class="login-form form-active">
+                <h2>Login</h2>
+                <input type="text" placeholder="Email" class="input-field">
+                <input type="password" placeholder="Password" class="input-field">
+                <button class="action-button" id="loginButton">Login</button>
+                <p class="form-toggle">Don't have an account? <a href="#">Signup</a></p>
+                <p class="reset-toggle">Forgot your password? <a href="#">Reset Password</a></p>
+            </div>
+            <div class="signup-form">
+                <h2>Signup</h2>
+                <input type="text" placeholder="First Name" class="input-field">
+                <input type="text" placeholder="Last Name" class="input-field">
+                <input type="email" placeholder="Email" class="input-field" >
+                <input type="password" placeholder="Password" class="input-field">
+                <button class="action-button" id="signupButton">Signup</button>
+                <p class="login-toggle">Already have an account? <a href="#">Login</a></p>
+            </div>
+            <div class="reset-password">
+                <h2>Reset Password</h2>
+                <input type="email" placeholder="Email" class="input-field">
+                <button class="action-button" id="resetPasswordButton">Reset Password</button>
+                <p class="login-toggle">Remember your password? <a href="#">Login</a></p>
+            </div>
+        </div>
+    </div>
+<script>
+    const url_base = "http://127.0.0.1:8000"
+
+    const loginForm = document.querySelector(".login-form");
+    const signupForm = document.querySelector(".signup-form");
+    const resetPassword = document.querySelector(".reset-password");
+    const formToggle = document.querySelectorAll(".form-toggle");
+    const loginToggle = document.querySelectorAll(".login-toggle");
+    const resetToggle = document.querySelectorAll(".reset-toggle");
+    const loginButton = document.getElementById("loginButton");
+    const signupButton = document.getElementById("signupButton");
+    const resetPasswordButton = document.getElementById("resetPasswordButton");
+
+    formToggle.forEach(button => {
+        button.addEventListener("click", () => {
+            loginForm.style.display = loginForm.style.display === "none" ? "none" : "none";
+            signupForm.style.display = signupForm.style.display === "none" ? "block" : "block";
+            resetPassword.style.display = resetPassword.style.display === "none" ? "none" : "block";
+        });
+    });
+        resetToggle.forEach(button => {
+        button.addEventListener("click", () => {
+            loginForm.style.display = loginForm.style.display === "none" ? "none" : "none";
+            signupForm.style.display = signupForm.style.display === "none" ? "none" : "none";
+            resetPassword.style.display = resetPassword.style.display === "none" ? "block" : "block";
+        });
+    });
+    loginToggle.forEach(button => {
+        button.addEventListener("click", () => {
+            loginForm.style.display = loginForm.style.display === "none" ? "block" : "block";
+            signupForm.style.display = signupForm.style.display === "none" ? "none" : "none";
+            resetPassword.style.display = resetPassword.style.display === "none" ? "none" : "none";
+        });
+    });
+
+    // Hide the signup and reset password forms initially
+    signupForm.style.display = "none";
+    resetPassword.style.display = "none";
+
+    resetPasswordButton.addEventListener("click", async () => {
+        const emailInput = document.querySelector(".reset-password input[type='email'][placeholder='Email']");
+        const email = emailInput.value;
+        emailInput.value = "";
+        const url = `${url_base}/reset-password_email/${email}`;
+        try {
+            const response = await fetch(url, {method: 'GET'});
+            if (response.ok) {
+                window.alert("Please check your email for reset link.");
+            } else {
+                alert("Error sending reset link. Make sure you are already signed up.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    });
+
+
+    // Handle signup button click
+    signupButton.addEventListener("click", async () => {
+        const firstNameInput = document.querySelector(".signup-form input[type='text'][placeholder='First Name']");
+        const lastNameInput = document.querySelector(".signup-form input[type='text'][placeholder='Last Name']");
+        const emailInput = document.querySelector(".signup-form input[type='email'][placeholder='Email']");
+        const passwordInput = document.querySelector(".signup-form input[type='password'][placeholder='Password']");
+
+        const firstName = firstNameInput.value;
+        const lastName = lastNameInput.value;
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        // Clear input values
+        firstNameInput.value = "";
+        lastNameInput.value = "";
+        emailInput.value = "";
+        passwordInput.value = "";
+
+        const url = `${url_base}/send-verify-email/${email}/${firstName}/${lastName}/${password}`;
+
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            if (response.ok) {
+                alert("Please check your email for verification.");
+            } else {
+                alert("Error sending verification email. Make sure you are using a valid SMUHSD email or have not already signed up.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+        window.alert("Please check your email for verification.")
+    });
+
+    // Handle login button click
+    loginButton.addEventListener("click", async () => {
+        const emailInput = document.querySelector(".login-form input[type='text'][placeholder='Email']");
+        const passwordInput = document.querySelector(".login-form input[type='password'][placeholder='Password']");
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        // Clear input values
+        emailInput.value = "";
+        passwordInput.value = "";
+
+        const loginUrl = `${url_base}/login/${email}/${password}`;
+
+        try {
+            const loginResponse = await fetch(loginUrl);
+            if (loginResponse.ok) {
+                const token = await loginResponse.json();
+                // Cache the token in the browser's local storage
+                localStorage.setItem("token", token);
+                localStorage.setItem("email", email);
+                window.location.href = "home.html";
+
+                // Redirect to log_classes.html
+
+            } else {
+                window.alert("Login failed. Please check your email and password.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+
+    });
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+        forgotPasswordLink.addEventListener("click", () => {
+            const email = prompt("Enter your email address:");
+            if (email) {
+                const resetUrl = `${url_base}/reset-password_email/${email}`;
+                // You can modify this to open the reset URL in a new window or tab
+                window.open(resetUrl, "_blank");
+            }
+        });
+</script>
+
+
+</body>
+</html>

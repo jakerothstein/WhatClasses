@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <title>WhatClasses</title>
+   <style>
+        /* Style for the back button */
+        #backButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WhatClasses</h1>
+    <form id="classForm">
+      <!-- Period selection dropdowns -->
+      <div id="periodContainer">
+        <div class="period">
+          <label for="period1">Select Period 1:</label>
+          <select class="periodDropdown" name="period1">
+          </select>
+        </div>
+      </div>
+
+      <button type="button" id="addPeriodButton">Add Period</button>
+      <button type="submit">Submit</button>
+    </form>
+            <button id="backButton">Back</button> <!-- The "Back" button in the top right corner -->
+
+  </div>
+
+
+  <script>
+  const url_base = "http://127.0.0.1:8000"
+
+    const apiUrl = `${url_base}/get-courses`; // Replace with your actual API endpoint
+
+    async function fetchCourses(dropdown, periodNumber) {
+      try {
+        const response = await fetch(apiUrl);
+        const coursesData = await response.json();
+
+        dropdown.innerHTML = ''; // Clear the dropdown options
+        dropdown.add(new Option('-- Select a class --', ''));
+
+        // Populate the dropdown options with courses data for the specific period
+        for (const category in coursesData) {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = category;
+
+          coursesData[category].forEach(course => {
+              const optionText = `${course.course_name} -- ${course.teacher_name}`;
+              const option = new Option(optionText, course.course_code);
+              optgroup.appendChild(option);
+
+          });
+
+          dropdown.appendChild(optgroup);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    }
+
+    // ...
+
+    function addPeriod() {
+      const periodContainer = document.getElementById('periodContainer');
+      if (periodContainer.children.length < 7) {
+        const newPeriodNumber = periodContainer.children.length + 1;
+
+        const newPeriodContainer = document.createElement('div');
+        newPeriodContainer.classList.add('period');
+
+        const lineBreak = document.createElement('br');
+        const newPeriodLabel = document.createElement('label');
+        newPeriodLabel.textContent = `Select Period ${newPeriodNumber}:`;
+
+        const newPeriodDropdown = document.createElement('select');
+        newPeriodDropdown.classList.add('periodDropdown');
+        newPeriodDropdown.name = `period${newPeriodNumber}`;
+
+        newPeriodContainer.appendChild(lineBreak);
+        newPeriodContainer.appendChild(newPeriodLabel);
+        newPeriodContainer.appendChild(newPeriodDropdown);
+        periodContainer.appendChild(newPeriodContainer);
+
+        fetchCourses(newPeriodDropdown, newPeriodNumber); // Fetch courses for the new dropdown
+      }
+    }
+
+    // ...
+
+
+
+    function validateForm() {
+      const dropdowns = document.querySelectorAll('.periodDropdown');
+      for (const dropdown of dropdowns) {
+        if (dropdown.value === '') {
+          alert('Please select a class for each period.');
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Attach form submission event
+    // Attach form submission event
+document.getElementById('classForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    if (validateForm()) {
+        const selectedClasses = [];
+        const dropdowns = document.querySelectorAll('.periodDropdown');
+        dropdowns.forEach(dropdown => {
+            selectedClasses.push(dropdown.value);
+        });
+
+        const formData = {
+            class_list: selectedClasses
+        };
+
+        try {
+            const email = localStorage.getItem("email");
+            let token = localStorage.getItem("token");
+            token = token.replace(/['"]+/g, '');
+            const request = `${url_base}/log-classes/${email}/${token}`
+            const response = await fetch(request, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                alert("Classes logged successfully!");
+                // Clear selected options in dropdowns
+                dropdowns.forEach(dropdown => {
+                    dropdown.value = '';
+                });
+                // Reload the page
+                window.location.href = "home.html";
+            } else {
+                alert("Failed to log classes. Please try again.");
+            }
+        } catch (error) {
+            console.error('Error submitting classes:', error);
+        }
+    }
+});
+
+
+    // Fetch courses and attach button event when the page loads
+    window.onload = function () {
+      fetchCourses(document.querySelector('.periodDropdown'), 1); // Fetch courses for the first dropdown
+      const addPeriodButton = document.getElementById('addPeriodButton');
+      addPeriodButton.addEventListener('click', addPeriod);
+    };
+    const backButton = document.getElementById("backButton");
+    backButton.addEventListener("click", () => {
+        window.location.href = "home.html"; // Redirect to home.html
+    });
+  </script>
+</body>
+</html>

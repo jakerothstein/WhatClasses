@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Home Page</title>
+    <style>
+        /* Style for the logout and log classes buttons */
+        .actionButton {
+            font-size: 14px;
+            margin-top: 10px;
+            position: absolute;
+            right: 10px;
+        }
+
+        #logClassesButton {
+            top: 40px;
+        }
+        #logoutButton {
+            top: 0px;
+        }
+
+        /* Style for the center div */
+        .centerDiv {
+            text-align: center;
+            margin-top: 50px; /* Adjust the margin as needed */
+            font-family: Arial, sans-serif;
+        }
+
+        .classmateCard {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .classmateName {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .classmateEmail {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Your Dashboard</h1>
+        <div class="centerDiv" id="classmatesData"></div>
+    </div>
+    <button id="logoutButton" class="actionButton">Logout</button>
+    <button id="logClassesButton" class="actionButton">Log Classes</button>
+    <script>
+        const url_base = "http://127.0.0.1:8000"
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const logoutButton = document.getElementById("logoutButton");
+            const classmatesDataDiv = document.getElementById("classmatesData");
+            const logClassesButton = document.getElementById("logClassesButton")
+
+
+            logClassesButton.addEventListener("click", () => {
+                window.location.href = "log_classes.html";
+            });
+            // Handle logout button click
+            logoutButton.addEventListener("click", async () => {
+                const email = localStorage.getItem("email");
+                let token = localStorage.getItem("token");
+                token = token.replace(/['"]+/g, '');
+
+                // Call the /logout endpoint
+                try {
+                    const response = await fetch(`${url_base}/logout/${email}/${token}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        console.log("Logout successful.");
+                    } else {
+                        console.error("Error logging out.");
+                    }
+                } catch (error) {
+                    console.error('Error logging out:', error);
+                }
+
+                // Clear cached token and email, then redirect to login page
+                localStorage.removeItem("token");
+                localStorage.removeItem("email");
+                window.location.href = "index.html"; // Replace with your actual login page
+            });
+
+            // Fetch and display classmates data
+            const email = localStorage.getItem("email");
+            let token = localStorage.getItem("token");
+            token = token.replace(/['"]+/g, '');
+
+            try {
+                const response = await fetch(`${url_base}/get-classmates/${email}/${token}`);
+                const classmatesData = await response.json();
+
+                // Generate HTML from the JSON data
+                let classmatesHTML = "";
+                for (const period in classmatesData) {
+                    classmatesHTML += `<h2>${period}</h2>`;
+                    if (classmatesData[period].length === 0) {
+                        classmatesHTML += "<p>No logged classmates in this period.</p>";
+                    } else {
+                        classmatesData[period].forEach(classmate => {
+                            classmatesHTML += `
+                                <p>
+                                    ${classmate.first_name} ${classmate.last_name} - <a href = "mailto:${classmate.email}">${classmate.email}</a>
+                              </p>
+                            `;
+                        });
+                    }
+                }
+
+                classmatesDataDiv.innerHTML = classmatesHTML;
+            } catch (error) {
+                console.error('Error fetching classmates data:', error);
+            }
+        });
+    </script>
+</body>
+</html>
