@@ -24,5 +24,5 @@ Web app to see what classes you have in common with other students!
 > Example OTP email
 
 # Credits
-Developed by Jake Rothstein and [Minjun Kim](https://github.com/masterholgo) 
+Developed by Jake Rothstein
 > Development time: 2 days 
